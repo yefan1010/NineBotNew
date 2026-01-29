@@ -279,6 +279,57 @@ async function sendBarkNotification(title, message) {
         return false;
     }
 }
+// 企业微信推送函数
+async function sendWeComNotification(title, message) {
+    const corpId = process.env.WECOM_CORP_ID;
+    const corpSecret = process.env.WECOM_CORP_SECRET;
+    const toUser = process.env.WECOM_TO_USER;
+    const agentId = process.env.WECOM_AGENT_ID;
+
+    if (!corpId || !corpSecret || !toUser || !agentId) {
+        console.error("企业微信配置不完整，跳过通知");
+        return false;
+    }
+
+    try {
+        // 获取access_token
+        const tokenResponse = await axios.get(
+            `https://qyapi.weixin.qq.com/cgi-bin/gettoken?corpid=${corpId}&corpsecret=${corpSecret}`
+        );
+        
+        if (tokenResponse.data.errcode !== 0) {
+            throw new Error(`获取token失败: ${tokenResponse.data.errmsg}`);
+        }
+        
+        const accessToken = tokenResponse.data.access_token;
+        
+        // 发送消息
+        const data = {
+            touser: toUser,
+            msgtype: "text",
+            text: {
+                content: `${title}\n\n${message}`
+            },
+            agentid: parseInt(agentId)
+        };
+        
+        const sendResponse = await axios.post(
+            `https://qyapi.weixin.qq.com/cgi-bin/message/send?access_token=${accessToken}`,
+            data
+        );
+        
+        if (sendResponse.data.errcode === 0) {
+            console.log("企业微信通知发送成功");
+            return true;
+        } else {
+            console.error("企业微信通知发送失败:", sendResponse.data.errmsg);
+            return false;
+        }
+    } catch (error) {
+        console.error("发送企业微信通知异常:", error.message);
+        return false;
+    }
+}
 
 // 初始化并执行签到
 async function init() {
@@ -340,6 +391,8 @@ async function init() {
 
     // 发送Bark通知
     await sendBarkNotification(title, message);
+    // 调用企业微信推送
+    await sendWeComNotification(title, message);
 }
 
 // 启动执行
