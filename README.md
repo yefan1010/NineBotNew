@@ -28,6 +28,10 @@
 |`BARK_GROUP`|`九号签到`（推送分组名称）|❌|选填，推送消息的分组标签|
 |`BARK_ICON`|`https://example.com/icon.png`（图标 URL）|❌|选填，推送消息显示的图标|
 |`BARK_SOUND`|`chime`（铃声名称）|❌|选填，推送消息的铃声（默认 `bell`，支持 `chime`、`alarm` 等）|
+|`WECOM_CORP_ID`|`企业微信ID|✅|必填|
+|`WECOM_CORP_SECRET`|企业微信应用SECRET|✅|必填|
+|`WECOM_TO_USER`|可见范围，不知道就写'@all'|✅|必填|
+|`WECOM_AGENT_ID`|`企业微信应用ID|✅|必填|
 
 
 # 使用方法
