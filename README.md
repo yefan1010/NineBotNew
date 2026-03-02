@@ -1,6 +1,6 @@
 # 九号出行自动签到脚本
 
-这是一个用于九号出行自动签到的 Node.js 脚本，基于 [wan-kong/ninebot-sign](https://github.com/wan-kong/ninebot-sign) 修改，新增了一些内容。
+这是一个用于九号出行自动签到的 Node.js 脚本，基于 [waistu/Ninebot][(https://github.com/waistu/Ninebot)](https://github.com/waistu/Ninebot) 修改，新增了一些内容。
 
 # 功能特点
 
@@ -8,6 +8,7 @@
 - ✅自动签到 (GitHub Actions & 青龙面板)
 - 👋单账号/多账号签到
 - 🔔Bark 通知推送
+- 🔔企业微信应用推送
 
 # 所需依赖
 
@@ -27,7 +28,17 @@
 |`BARK_URL`|`https://api.day.app`（默认值）|❌|选填，自定义 BARK 服务器地址（默认官方地址）|
 |`BARK_GROUP`|`九号签到`（推送分组名称）|❌|选填，推送消息的分组标签|
 |`BARK_ICON`|`https://example.com/icon.png`（图标 URL）|❌|选填，推送消息显示的图标|
-|`BARK_SOUND`|`chime`（铃声名称）|❌|选填，推送消息的铃声（默认 `bell`，支持 `chime`、`alarm` 等）|
+|`BARK_SOUND`|`chime`（铃声名称）|❌|选填，推送消息的铃声（默认 `bell`，支持 `chime`、`alarm` 等）|
+|`WECOM_CORP_ID`|`ww1234567890abcdef`（企业 ID）|❌|选填，企业微信管理后台「我的企业」页面获取|
+|`WECOM_CORP_SECRET`|`xxxxxxxxxxxxxxxxxxxxxxxx`（应用 Secret）|❌|选填，企业微信管理后台对应应用的 Secret|
+|`WECOM_AGENT_ID`|`1000002`（应用 AgentId）|❌|选填，企业微信管理后台对应应用的 AgentId|
+|`WECOM_PROXY_URL`|`https://qyapi.weixin.qq.com`（默认值）|❌|选填，企业微信 API 代理地址（默认官方地址，可替换为自建代理）|
+|`WECOM_TO_USER`|`UserID1\|UserID2` 或 `@all`（默认 `@all`）|❌|选填，消息接收人，默认发送给全体成员|
+|`WECOM_TO_PARTY`|`1\|2`（部门 ID 列表）|❌|选填，发送给指定部门|
+|`WECOM_TO_TAG`|`1\|2`（标签 ID 列表）|❌|选填，发送给指定标签下的成员|
+|`WECOM_MSG_TYPE`|`text` / `textcard` / `markdown`（默认 `text`）|❌|选填，消息类型：纯文本 / 文本卡片 / Markdown|
+|`WECOM_CARD_URL`|`https://h5-bj.ninebot.com`（默认值）|❌|选填，文本卡片消息点击后跳转的 URL（仅 `textcard` 类型生效）|
+|`WECOM_CARD_BTN`|`查看详情`（默认值）|❌|选填，文本卡片消息按钮文字（仅 `textcard` 类型生效）|
 
 
 # 使用方法
@@ -76,6 +87,15 @@ BARK_URL=https://api.day.app # 默认使用 APP 自带服务器
 # BARK_GROUP=九号签到通知 # 通知分组
 # BARK_ICON=https://xxx.png # 通知图标URL
 # BARK_SOUND=bell # 通知铃声
+
+# 企业微信应用推送相关（可选，需要则配置）
+
+# WECOM_CORP_ID=你的企业ID # 企业微信管理后台「我的企业」获取
+# WECOM_CORP_SECRET=你的应用Secret # 应用管理页面获取
+# WECOM_AGENT_ID=你的应用AgentId # 应用管理页面获取
+# WECOM_PROXY_URL=https://qyapi.weixin.qq.com # 企业微信API代理地址，默认官方地址
+# WECOM_TO_USER=@all # 接收人，默认@all
+# WECOM_MSG_TYPE=text # 消息类型：text / textcard / markdown
 ```
 
 4. 运行脚本
@@ -86,7 +106,7 @@ npm start
 
 ## 青龙面板
 
-1. 添加订阅  https://github.com/waistu/Ninebot.git
+1. 添加订阅  [https://github.com/waistu/Ninebot.git](https://github.com/cheny95/Ninebot.git)
 2. 安装NodeJs 依赖：axios、moment、dotenv
 3. 添加环境变量
 4. 修改任务定时

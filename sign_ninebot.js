@@ -280,6 +280,96 @@ async function sendBarkNotification(title, message) {
     }
 }
 
+// 发送企业微信应用推送
+async function sendWeComNotification(title, message) {
+    // 从环境变量获取企业微信配置
+    const corpId = process.env.WECOM_CORP_ID;         // 企业ID
+    const corpSecret = process.env.WECOM_CORP_SECRET;  // 应用Secret
+    const agentId = process.env.WECOM_AGENT_ID;        // 应用AgentId
+    const toUser = process.env.WECOM_TO_USER || "@all"; // 接收人，默认@all全体
+    const proxyUrl = (process.env.WECOM_PROXY_URL || "https://qyapi.weixin.qq.com").replace(/\/+$/, ""); // 代理地址，默认官方API
+
+    // 缺少必要配置则跳过
+    if (!corpId || !corpSecret || !agentId) {
+        console.log("未配置企业微信应用推送（WECOM_CORP_ID / WECOM_CORP_SECRET / WECOM_AGENT_ID），跳过企业微信通知");
+        return false;
+    }
+
+    try {
+        // 第一步：获取 access_token
+        console.log(`企业微信: 正在获取access_token...（API地址: ${proxyUrl}）`);
+        const tokenUrl = `${proxyUrl}/cgi-bin/gettoken?corpid=${corpId}&corpsecret=${corpSecret}`;
+        const tokenRes = await axios.get(tokenUrl, { timeout: 5000 });
+
+        if (tokenRes.data.errcode !== 0) {
+            console.error("企业微信获取access_token失败:", tokenRes.data.errmsg);
+            return false;
+        }
+
+        const accessToken = tokenRes.data.access_token;
+        console.log("企业微信: access_token获取成功");
+
+        // 第二步：构建消息体
+        // 判断消息类型：支持文本卡片（textcard）或纯文本（text）
+        const msgType = process.env.WECOM_MSG_TYPE || "text"; // 默认文本消息
+
+        let msgBody = {
+            touser: toUser,
+            agentid: parseInt(agentId),
+            safe: 0,
+        };
+
+        // 如果配置了发送给指定部门
+        if (process.env.WECOM_TO_PARTY) {
+            msgBody.toparty = process.env.WECOM_TO_PARTY;
+        }
+
+        // 如果配置了发送给指定标签
+        if (process.env.WECOM_TO_TAG) {
+            msgBody.totag = process.env.WECOM_TO_TAG;
+        }
+
+        if (msgType === "textcard") {
+            // 文本卡片消息
+            msgBody.msgtype = "textcard";
+            msgBody.textcard = {
+                title: title,
+                description: message.replace(/\n/g, "<br>"),
+                url: process.env.WECOM_CARD_URL || "https://h5-bj.ninebot.com",
+                btntxt: process.env.WECOM_CARD_BTN || "查看详情"
+            };
+        } else if (msgType === "markdown") {
+            // Markdown消息（仅企业微信内部支持，不支持微信插件）
+            msgBody.msgtype = "markdown";
+            msgBody.markdown = {
+                content: `## ${title}\n${message}`
+            };
+        } else {
+            // 默认纯文本消息
+            msgBody.msgtype = "text";
+            msgBody.text = {
+                content: `${title}\n\n${message}`
+            };
+        }
+
+        // 第三步：发送消息
+        const sendUrl = `${proxyUrl}/cgi-bin/message/send?access_token=${accessToken}`;
+        console.log("企业微信: 正在发送消息...");
+        const sendRes = await axios.post(sendUrl, msgBody, { timeout: 5000 });
+
+        if (sendRes.data.errcode === 0) {
+            console.log("企业微信应用推送发送成功");
+            return true;
+        } else {
+            console.error("企业微信应用推送发送失败:", sendRes.data.errmsg);
+            return false;
+        }
+    } catch (error) {
+        console.error("发送企业微信通知异常:", error.message);
+        return false;
+    }
+}
+
 // 初始化并执行签到
 async function init() {
     // 处理多账号配置
@@ -335,11 +425,14 @@ async function init() {
     const title = "九号出行签到结果";
     let message = allResults.map(acc => {
         const status = acc.success ? "✅" : "❌";
-        return `${status} ${acc.name}\n${acc.logs.replace(/\n/g, "\n  ")}`;
+        return `${status} ${acc.name}\n${acc.logs.replace(/\n/g, "\n")}`;
     }).join("\n\n");
 
-    // 发送Bark通知
-    await sendBarkNotification(title, message);
+    // 发送通知（并行发送，互不影响）
+    await Promise.allSettled([
+        sendBarkNotification(title, message),
+        sendWeComNotification(title, message)
+    ]);
 }
 
 // 启动执行
